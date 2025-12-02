@@ -91,15 +91,15 @@ export default function EventDetailPage({ params }: { params: Promise<{ id: stri
   }, [id]);
 
   const resetOccForm = () => {
-    // 默认填入当前时间
+    // 默认只填入年月日，时分秒留空让用户选择是否填写
     const now = new Date();
     setOccForm({
       year: now.getFullYear().toString(),
       month: (now.getMonth() + 1).toString(),
       day: now.getDate().toString(),
-      hour: now.getHours().toString(),
-      minute: now.getMinutes().toString(),
-      second: now.getSeconds().toString(),
+      hour: '',
+      minute: '',
+      second: '',
       note: '',
     });
   };
