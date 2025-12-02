@@ -20,6 +20,17 @@ function formatOccurrenceTime(occ: Occurrence): string {
   return parts.join('') || '未设置时间';
 }
 
+function occurrenceToTimestamp(occ: Occurrence): number {
+  return new Date(
+    occ.year ?? 0,
+    (occ.month ?? 1) - 1,
+    occ.day ?? 1,
+    occ.hour ?? 0,
+    occ.minute ?? 0,
+    occ.second ?? 0
+  ).getTime();
+}
+
 export default function EventDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
   const router = useRouter();
@@ -32,6 +43,9 @@ export default function EventDetailPage({ params }: { params: Promise<{ id: stri
   const [showEditEventModal, setShowEditEventModal] = useState(false);
   const [showStatsModal, setShowStatsModal] = useState(false);
   const [editingOccurrence, setEditingOccurrence] = useState<Occurrence | null>(null);
+
+  // 排序
+  const [sortOrder, setSortOrder] = useState<'desc' | 'asc'>('desc');
 
   // 时间筛选
   const [startDate, setStartDate] = useState('');
@@ -358,7 +372,28 @@ export default function EventDetailPage({ params }: { params: Promise<{ id: stri
         </Card>
       )}
 
-      {/* Occurrences List */}
+      {/* Sort Button & Occurrences List */}
+      {occurrences.length > 0 && (
+        <div className="flex items-center justify-between mb-3">
+          <p className="text-sm text-gray-500">
+            共 {occurrences.length} 条记录
+          </p>
+          <button
+            onClick={() => setSortOrder(sortOrder === 'desc' ? 'asc' : 'desc')}
+            className="inline-flex items-center gap-1 px-3 py-1.5 text-sm text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-colors"
+          >
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              {sortOrder === 'desc' ? (
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 4h13M3 8h9m-9 4h6m4 0l4-4m0 0l4 4m-4-4v12" />
+              ) : (
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 4h13M3 8h9m-9 4h9m5-4v12m0 0l-4-4m4 4l4-4" />
+              )}
+            </svg>
+            {sortOrder === 'desc' ? '时间降序' : '时间升序'}
+          </button>
+        </div>
+      )}
+
       {occurrences.length === 0 ? (
         <Card className="p-12 text-center">
           <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
@@ -379,7 +414,12 @@ export default function EventDetailPage({ params }: { params: Promise<{ id: stri
         </Card>
       ) : (
         <div className="space-y-3">
-          {occurrences.map((occ) => (
+          {[...occurrences]
+            .sort((a, b) => {
+              const diff = occurrenceToTimestamp(b) - occurrenceToTimestamp(a);
+              return sortOrder === 'desc' ? diff : -diff;
+            })
+            .map((occ) => (
             <Card key={occ.id} className="p-4">
               <div className="flex items-center justify-between">
                 <div>
